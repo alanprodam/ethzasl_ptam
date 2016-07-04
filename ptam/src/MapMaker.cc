@@ -425,7 +425,10 @@ bool MapMaker::InitFromStereo(KeyFrame::Ptr kF,
   pkSecond->MakeKeyFrame_Rest();
   //Weiss{
   //	for(int i=0; i<5; i++)
-  /*}*/	BundleAdjustAll();
+  /*}*/	bool initBA = BundleAdjustAll();
+
+  if(!initBA)
+    return false;
 
   // Estimate the feature depth distribution in the first two key-frames
   // (Needed for epipolar search)
@@ -897,6 +900,7 @@ KeyFrame::Ptr MapMaker::ClosestKeyFrame(KeyFrame::Ptr k)
     }
   }
   assert(nClosest != -1);
+  cout<<nClosest<<endl;
   return mMap.vpKeyFrames[nClosest];
 }
 
@@ -950,7 +954,7 @@ bool MapMaker::NeedNewKeyFrame(KeyFrame::Ptr kCurrent)
 }
 
 // Perform bundle adjustment on all keyframes, all map points
-void MapMaker::BundleAdjustAll()
+bool MapMaker::BundleAdjustAll()
 {
   // construct the sets of kfs/points to be adjusted:
   // in this case, all of them
@@ -966,7 +970,7 @@ void MapMaker::BundleAdjustAll()
   for(unsigned int i=0; i<mMap.vpPoints.size();i++)
     sMapPoints.insert(mMap.vpPoints[i]);
 
-  BundleAdjust(sAdj, sFixed, sMapPoints, false);
+  return BundleAdjust(sAdj, sFixed, sMapPoints, false);
 }
 
 // Peform a local bundle adjustment which only adjusts
@@ -1031,12 +1035,12 @@ void MapMaker::BundleAdjustRecent()
 }
 
 // Common bundle adjustment code. This creates a bundle-adjust instance, populates it, and runs it.
-void MapMaker::BundleAdjust(set<KeyFrame::Ptr> sAdjustSet, set<KeyFrame::Ptr> sFixedSet, set<MapPoint::Ptr> sMapPoints, bool bRecent)
+bool MapMaker::BundleAdjust(set<KeyFrame::Ptr> sAdjustSet, set<KeyFrame::Ptr> sFixedSet, set<MapPoint::Ptr> sMapPoints, bool bRecent)
 {
   Bundle b(mCamera);   // Our bundle adjuster
   mbBundleRunning = true;
   mbBundleRunningIsRecent = bRecent;
-
+  bool nanPresent = false;
   // The bundle adjuster does different accounting of keyframes and map points;
   // Translation maps are stored:
   map<MapPoint::Ptr, int> mPoint_BundleID;
@@ -1062,8 +1066,19 @@ void MapMaker::BundleAdjust(set<KeyFrame::Ptr> sAdjustSet, set<KeyFrame::Ptr> sF
   for(set<MapPoint::Ptr>::iterator it = sMapPoints.begin(); it!=sMapPoints.end(); it++)
   {
     int nBundleID = b.AddPoint((*it)->v3WorldPos);
-    mPoint_BundleID[*it] = nBundleID;
-    mBundleID_Point[nBundleID] = *it;
+    if(!nanPresent and nBundleID != -1)
+    {
+      mPoint_BundleID[*it] = nBundleID;
+      mBundleID_Point[nBundleID] = *it;
+    }
+    else
+    {  
+      nanPresent = true;
+      mbResetRequested = true;
+      mbResetDone = false;
+  
+      return false;
+    }
 
     //Weiss{ feature statistics
     //		if(kfid==(*it)->pPatchSourceKF->ID)
@@ -1077,7 +1092,7 @@ void MapMaker::BundleAdjust(set<KeyFrame::Ptr> sAdjustSet, set<KeyFrame::Ptr> sF
   // Add the relevant point-in-keyframe measurements
   for(unsigned int i=0; i<mMap.vpKeyFrames.size(); i++)
   {
-    if(mView_BundleID.count(mMap.vpKeyFrames[i]) == 0)
+    if(nanPresent or mView_BundleID.count(mMap.vpKeyFrames[i]) == 0)
       continue;
 
     int nKF_BundleID = mView_BundleID[mMap.vpKeyFrames[i]];
@@ -1096,7 +1111,7 @@ void MapMaker::BundleAdjust(set<KeyFrame::Ptr> sAdjustSet, set<KeyFrame::Ptr> sF
   // Run the bundle adjuster. This returns the number of successful iterations
   int nAccepted = b.Compute(&mbBundleAbortRequested);
 
-  if(nAccepted < 0)
+  if(nAccepted < 0 or nanPresent)
   {
     // Crap: - LM Ran into a serious problem!
     // This is probably because the initial stereo was messed up.
@@ -1104,7 +1119,9 @@ void MapMaker::BundleAdjust(set<KeyFrame::Ptr> sAdjustSet, set<KeyFrame::Ptr> sF
     mMessageForUser << "!! MapMaker: Cholesky failure in bundle adjust. " << endl
         << "   The map is probably corrupt: Ditching the map. " << endl;
     mbResetRequested = true;
-    return;
+    mbResetDone = false;
+  
+    return false;
   }
 
   // Bundle adjustment did some updates, apply these to the map
@@ -1169,6 +1186,7 @@ void MapMaker::BundleAdjust(set<KeyFrame::Ptr> sAdjustSet, set<KeyFrame::Ptr> sF
       //}
     }
   }
+  return true;
 }
 
 // Mapmaker's try-to-find-a-point-in-a-keyframe code. This is used to update

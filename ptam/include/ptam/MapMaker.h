@@ -99,8 +99,8 @@ protected:
   Vector<3> ReprojectPoint(SE3<> se3AfromB, const Vector<2> &v2A, const Vector<2> &v2B);
 
   // Bundle adjustment functions:
-  void BundleAdjust(std::set<KeyFrame::Ptr>, std::set<KeyFrame::Ptr>, std::set<boost::shared_ptr<MapPoint> >, bool);
-  void BundleAdjustAll();
+  bool BundleAdjust(std::set<KeyFrame::Ptr>, std::set<KeyFrame::Ptr>, std::set<boost::shared_ptr<MapPoint> >, bool);
+  bool BundleAdjustAll();
   void BundleAdjustRecent();
 
   // Data association functions:

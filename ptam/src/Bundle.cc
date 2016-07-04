@@ -80,6 +80,7 @@ int Bundle::AddPoint(Vector<3> v3Pos)
   {
     cerr << " You sucker, tried to give me a nan " << v3Pos << endl;
     v3Pos = Zeros;
+    n=-1;
   }
   p.v3Pos = v3Pos;
   mvPoints.push_back(p);
