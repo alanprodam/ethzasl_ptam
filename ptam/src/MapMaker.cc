@@ -900,7 +900,6 @@ KeyFrame::Ptr MapMaker::ClosestKeyFrame(KeyFrame::Ptr k)
     }
   }
   assert(nClosest != -1);
-  cout<<nClosest<<endl;
   return mMap.vpKeyFrames[nClosest];
 }
 
