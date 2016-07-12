@@ -488,7 +488,7 @@ bool MapMaker::InitFromStereo(KeyFrame::Ptr kF,
   mMap.bGood = true;
   se3TrackerPose = pkSecond->se3CfromW;
 
-  mMessageForUser << "  MapMaker: made initial map with " << mMap.vpPoints.size() << " points." << endl;
+  //mMessageForUser << "  MapMaker: made initial map with " << mMap.vpPoints.size() << " points." << endl;
 
   //slynen octomap_interface{
     octomap_interface.addKeyFrame(pkFirst);
@@ -900,7 +900,6 @@ KeyFrame::Ptr MapMaker::ClosestKeyFrame(KeyFrame::Ptr k)
     }
   }
   assert(nClosest != -1);
-  cout<<nClosest<<endl;
   return mMap.vpKeyFrames[nClosest];
 }
 

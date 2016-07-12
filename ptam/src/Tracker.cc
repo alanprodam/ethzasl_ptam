@@ -392,13 +392,13 @@ void Tracker::GUICommandHandler(string sCommand, string sParams)  // Called by t
     else if(sParams == "r")
     {
       mAutoreset=false;
-      ROS_WARN_STREAM("Forcing map reset because of user input! Autoreset set to " << mAutoreset);
+      //ROS_WARN_STREAM("Forcing map reset because of user input! Autoreset set to " << mAutoreset);
       Reset();
     }
     else if(sParams == "a") // autoreset test button
     {
       mAutoreset=true;
-      ROS_WARN_STREAM("Forcing map reset because of user input! Autoreset set to " << mAutoreset);
+      //ROS_WARN_STREAM("Forcing map reset because of user input! Autoreset set to " << mAutoreset);
       Reset();
     }
     else if(sParams == "q" || sParams == "Escape")
@@ -519,7 +519,7 @@ void Tracker::TrackForInitialMap()
         }
         mnInitialStage = TRAIL_TRACKING_COMPLETE;
 
-        ROS_INFO_STREAM("Initialized map on level "<<level);
+        //ROS_INFO_STREAM("Initialized map on level "<<level);
 
       }
       else
@@ -1653,7 +1653,7 @@ void Tracker::AssessTrackingQuality()
     if (pPars.AutoInit & mMap.IsGood())
     {
       mAutoreset=true;
-      ROS_WARN_STREAM("Forcing map reset because of bad tracking! Autoreset set to " << mAutoreset);
+      //ROS_WARN_STREAM("Forcing map reset because of bad tracking! Autoreset set to " << mAutoreset);
     }
     //}
     mnLostFrames++;
