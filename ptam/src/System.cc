@@ -261,7 +261,7 @@ bool System::transformQuaternion(const std::string & target_frame, const std_msg
   try
   {
     tf_sub_.transformQuaternion(target_frame, q_in, q_out);
-    quaternionToRotationMatrix(q_out.quaternion, r_out);
+    r_out = quaternionToRotationMatrix(q_out.quaternion);
     return true;
   }
   catch (tf::TransformException & e)
@@ -628,16 +628,10 @@ bool System::posepointcloudservice(ptam_com::PosePointCloudRequest & req, ptam_c
   T[1] = req.pose.pose.position.y;
   T[2] = req.pose.pose.position.z;
 
-  tf::Quaternion currentQuat;
-  tf::quaternionMsgToTF(req.pose.pose.orientation, currentQuat);
-  tf::Matrix3x3 m(currentQuat);
+  TooN::SO3<double> R = quaternionToRotationMatrix(req.pose.pose.orientation);
 
-  TooN::Matrix<3,3, double> R(TooN::Data(m[0][0],  m[0][1],  m[0][2], 
-                                          m[1][0],  m[1][1],  m[1][2], 
-                                          m[2][0],  m[2][1],  m[2][2] ));  
-
-  pcl::PointCloud<pcl::PointXYZ>::Ptr pointCloud = getVisiblePointsFromPose(TooN::SE3<double>(TooN::SO3<double>(R),-R*T));
-  pcl::toROSMsg(*pointCloud, resp.pointCloud);
+  //pcl::PointCloud<pcl::PointXYZ>::Ptr pointCloud = getVisiblePointsFromPose(TooN::SE3<double>(R,-R.get_matrix()*T));
+  pcl::toROSMsg(*(getVisiblePointsFromPose(TooN::SE3<double>(R,-R.get_matrix()*T))), resp.pointCloud);
 
   return true;
 }
@@ -787,7 +781,7 @@ bool System::keyframesservice(ptam_com::KeyFrame_srvRequest & req, ptam_com::Key
 
 //}
 
-void System::quaternionToRotationMatrix(const geometry_msgs::Quaternion & q, TooN::SO3<double> & R)
+TooN::SO3<double> System::quaternionToRotationMatrix(const geometry_msgs::Quaternion & q)
 {
   // stolen from Eigen3 and adapted to TooN
 
@@ -816,7 +810,7 @@ void System::quaternionToRotationMatrix(const geometry_msgs::Quaternion & q, Too
   res(2, 1) = tyz + twx;
   res(2, 2) = 1 - (txx + tyy);
 
-  R = res;
+  return res;
 
   //  R = TooN::SO3<double>::exp(TooN::makeVector<double>(q.x, q.y, q.z) * acos(q.w) * 2.0 / sqrt(q.x * q.x + q.y * q.y + q.z * q.z));
 }

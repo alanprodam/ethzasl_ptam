@@ -116,7 +116,7 @@ private:
 
   bool transformQuaternion(const std::string & target_frame, const std_msgs::Header & header, const geometry_msgs::Quaternion & q_in, TooN::SO3<double> & r_out);
   bool transformPoint(const std::string & target_frame, const std_msgs::Header & header, const geometry_msgs::Point & t_in, TooN::Vector<3> & t_out);
-  void quaternionToRotationMatrix(const geometry_msgs::Quaternion & q, TooN::SO3<double> & R);
+  TooN::SO3<double> quaternionToRotationMatrix(const geometry_msgs::Quaternion & q);
 
   /// finds object in queue with timestamp closest to timestamp. Requires that T has a std_msgs::header field named "header"
   template<class T> bool findClosest(const ros::Time & timestamp, std::queue<T> & queue, T * obj, const double & max_delay = 0.01);
