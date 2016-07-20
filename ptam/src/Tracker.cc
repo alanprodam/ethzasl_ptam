@@ -997,6 +997,10 @@ void Tracker::TrackMap()
   for(unsigned int k=0; k<vpPVKeyFrames.size(); k++)
     for(unsigned int i=0; i<vpPVKeyFrames.at(k)->vpPoints.size(); i++)
       vpPVKeyFrames.at(k)->vpPoints.at(i)->bAlreadyProjected = false;
+
+  for(unsigned int k=0; k<vpPVKeyFrames.size(); k++)
+    vpPVKeyFrames.at(k).reset();
+  vpPVKeyFrames.clear();
 #else
 
   // For all points in the map..

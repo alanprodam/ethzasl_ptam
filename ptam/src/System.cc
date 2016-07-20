@@ -33,6 +33,7 @@ using namespace std;
 using namespace GVars3;
 
 pthread_mutex_t System::odom_mutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t System::pointCloud_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 System::System() :
       nh_("vslam"), image_nh_(""), first_frame_(true), mpMap(NULL)
@@ -420,6 +421,7 @@ void System::publishPoseAndInfo(const std_msgs::Header & header)
         pub_odom_.publish(msg_odom);
       }
       prev_nav_msg = msg_pose;
+      msg_pose.reset();
 
     }
 
@@ -444,14 +446,21 @@ void System::publishPoseAndInfo(const std_msgs::Header & header)
       msg_info->mapViewerMessage = mpMapViewer->GetMessageForUser();
       msg_info->keyframes = mpMap->vpKeyFrames.size();
       pub_info_.publish(msg_info);
+      msg_info.reset();
     }
 }
 
-pcl::PointCloud<pcl::PointXYZ>::Ptr System::getVisiblePointsFromPose(TooN::SE3<double> pose)
+//static pcl::PointCloud<pcl::PointXYZ> funcVisiblePoints;
+
+pcl::PointCloud<pcl::PointXYZ> System::getVisiblePointsFromPose(TooN::SE3<double> pose)
 {
-  pcl::PointCloud<pcl::PointXYZ>::Ptr visiblePoints(new pcl::PointCloud<pcl::PointXYZ>);
-    visiblePoints->header.frame_id = "world";
-    visiblePoints->height = 1;
+  pcl::PointCloud<pcl::PointXYZ> funcVisiblePoints;//(new pcl::PointCloud<pcl::PointXYZ>);
+  pthread_mutex_lock(&pointCloud_mutex);
+  try {
+  
+    //funcVisiblePoints.points.clear();
+    funcVisiblePoints.header.frame_id = "world";
+    funcVisiblePoints.height = 1;
   #ifdef KF_REPROJ
   //possibly visible Keyframes
   vector<KeyFrame::Ptr> vpPVKeyFrames;
@@ -461,7 +470,8 @@ pcl::PointCloud<pcl::PointXYZ>::Ptr System::getVisiblePointsFromPose(TooN::SE3<d
     { //project best points
       int foundKFPoints = 0;
       if (!mpMap->vpKeyFrames.at(k)->vpPoints.size()) continue; //if this keyframe doesn't yet contain any points
-
+      cout<<"NOT FIRST CONTINUE"<<endl;
+      cout<<mpMap->vpKeyFrames.at(k)->iBestPointsCount<<endl;
       for(int j=0; j<mpMap->vpKeyFrames.at(k)->iBestPointsCount; j++)
       {
         if(mpMap->vpKeyFrames.at(k)->apCurrentBestPoints[j]==NULL) continue;
@@ -474,9 +484,12 @@ pcl::PointCloud<pcl::PointXYZ>::Ptr System::getVisiblePointsFromPose(TooN::SE3<d
         TData.Project(pose, *mpCamera);
         if(TData.bInImage)
           foundKFPoints++;
+
       };
+      cout<<"NOT FIRST FOR LOOP"<<endl;
       //have at least some points of this keyframe been found?
       if(foundKFPoints>1) vpPVKeyFrames.push_back(mpMap->vpKeyFrames.at(k));
+      cout<<"NOT FIRST IF"<<endl;
     };
   };
   //if we didn't find any Keyframes or tracking quality is bad
@@ -485,11 +498,13 @@ pcl::PointCloud<pcl::PointXYZ>::Ptr System::getVisiblePointsFromPose(TooN::SE3<d
     for(unsigned int k=0; k<mpMap->vpKeyFrames.size(); k++){
       vpPVKeyFrames.push_back(mpMap->vpKeyFrames.at(k));
     }
+    cout<<"NOT HERE"<<endl;
   }
   for(unsigned int k=0; k<vpPVKeyFrames.size(); k++){//for all possibly visible keyframes
     for(unsigned int i=0; i<vpPVKeyFrames.at(k)->vpPoints.size(); i++)// For all points in the visible keyframes..
     {
       MapPoint::Ptr p= (vpPVKeyFrames.at(k)->vpPoints.at(i));
+      cout<<"NOT MAPPOINT"<<endl;
       if(p->bAlreadyProjected) continue;//check whether we already projected that point from another KF
       p->bAlreadyProjected=true;
       if(!p->pTData)
@@ -511,14 +526,20 @@ pcl::PointCloud<pcl::PointXYZ>::Ptr System::getVisiblePointsFromPose(TooN::SE3<d
       // Otherwise, this point is suitable to be searched in the current image! Add to the PVS.
       TData.bSearched = false;
       TData.bFound = false;
-      visiblePoints->points.push_back(pcl::PointXYZ(TData.Point->v3WorldPos[0], TData.Point->v3WorldPos[1], TData.Point->v3WorldPos[2]));
+
+      funcVisiblePoints.points.push_back(pcl::PointXYZ(TData.Point->v3WorldPos[0], TData.Point->v3WorldPos[1], TData.Point->v3WorldPos[2]));
     };
   };
 
-  //reset alreadyprojected marker
+  //reset alreadyprojected marker //Important else points wont be shown in ptam window and map
   for(unsigned int k=0; k<vpPVKeyFrames.size(); k++)
     for(unsigned int i=0; i<vpPVKeyFrames.at(k)->vpPoints.size(); i++)
       vpPVKeyFrames.at(k)->vpPoints.at(i)->bAlreadyProjected = false;
+  cout<<"NOT FALSE"<<endl;
+  for(unsigned int k=0; k<vpPVKeyFrames.size(); k++)
+    vpPVKeyFrames.at(k).reset();
+  vpPVKeyFrames.clear();
+  cout<<"NOT reset"<<endl;
 #else
 
   // For all points in the map..
@@ -545,12 +566,21 @@ pcl::PointCloud<pcl::PointXYZ>::Ptr System::getVisiblePointsFromPose(TooN::SE3<d
     // Otherwise, this point is suitable to be searched in the current image! Add to the PVS.
     TData.bSearched = false;
     TData.bFound = false;
-    visiblePoints->points.push_back(pcl::PointXYZ(TData.Point->v3WorldPos[0], TData.Point->v3WorldPos[1], TData.Point->v3WorldPos[2]));
+    funcVisiblePoints.points.push_back(pcl::PointXYZ(TData.Point->v3WorldPos[0], TData.Point->v3WorldPos[1], TData.Point->v3WorldPos[2]));
   };
   //slynen{ reprojection
 #endif
-    visiblePoints->width = visiblePoints->points.size();
-    return visiblePoints;
+    funcVisiblePoints.width = funcVisiblePoints.points.size();
+  }
+  catch(CVD::Exceptions::All& e)
+  {
+    
+    cout << endl;
+    cout << " Pointcloud func Exception was: " << endl;
+    cout << e.what << endl;
+  }
+    pthread_mutex_unlock(&pointCloud_mutex);
+    return funcVisiblePoints;
 }
 
 void System::publishPreviewImage(CVD::Image<CVD::byte> & img, const std_msgs::Header & header)
@@ -616,8 +646,9 @@ void System::publishPreviewImage(CVD::Image<CVD::byte> & img, const std_msgs::He
     pub_preview_image_.publish(img_msg);
     cvReleaseImageHeader(&ocv_img);
   }
-    
-    pub_visibleCloud_.publish(getVisiblePointsFromPose(mpTracker->GetCurrentPose()));
+    pcl::PointCloud<pcl::PointXYZ> visiblePoints = getVisiblePointsFromPose(mpTracker->GetCurrentPose());
+    pub_visibleCloud_.publish(visiblePoints);
+    //visiblePoints.reset();
 
 }
 
@@ -630,8 +661,9 @@ bool System::posepointcloudservice(ptam_com::PosePointCloudRequest & req, ptam_c
 
   TooN::SO3<double> R = quaternionToRotationMatrix(req.pose.pose.orientation);
 
-  //pcl::PointCloud<pcl::PointXYZ>::Ptr pointCloud = getVisiblePointsFromPose(TooN::SE3<double>(R,-R.get_matrix()*T));
-  pcl::toROSMsg(*(getVisiblePointsFromPose(TooN::SE3<double>(R,-R.get_matrix()*T))), resp.pointCloud);
+  pcl::PointCloud<pcl::PointXYZ> visiblePoints = getVisiblePointsFromPose(TooN::SE3<double>(R,-R.get_matrix()*T));
+  pcl::toROSMsg(visiblePoints, resp.pointCloud);
+  //visiblePoints.reset();
 
   return true;
 }

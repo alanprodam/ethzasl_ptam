@@ -89,7 +89,7 @@ private:
   GLWindow2 *mGLWindow;
   MapViewer *mpMapViewer;
   
-  static pthread_mutex_t odom_mutex;
+  static pthread_mutex_t odom_mutex, pointCloud_mutex;
   CVD::Image<CVD::byte > img_bw_;
   CVD::Image<CVD::Rgb<CVD::byte> > img_rgb_;
 
@@ -120,7 +120,7 @@ private:
 
   /// finds object in queue with timestamp closest to timestamp. Requires that T has a std_msgs::header field named "header"
   template<class T> bool findClosest(const ros::Time & timestamp, std::queue<T> & queue, T * obj, const double & max_delay = 0.01);
-  pcl::PointCloud<pcl::PointXYZ>::Ptr getVisiblePointsFromPose(TooN::SE3<double> pose);
+  pcl::PointCloud<pcl::PointXYZ> getVisiblePointsFromPose(TooN::SE3<double> pose);
   static void GUICommandCallBack(void* ptr, std::string sCommand, std::string sParams);
 
 };
