@@ -3,11 +3,13 @@
 #include <stdlib.h>
 #include <iostream>
 #include <stdio.h>
+#include <exception>
 
 #include <gvars3/instances.h>
 #include "ptam/System.h"
 #include <ptam/Params.h>
 
+#include <std_msgs/Empty.h>
 #include "ros/ros.h"
 
 using namespace std;
@@ -24,6 +26,9 @@ int main(int argc, char** argv)
   cout << "  Copyright (C) Isis Innovation Limited 2008 " << endl;
   cout << endl;
 
+  ros::NodeHandle nh_;
+  ros::Publisher pub_planner_reset = nh_.advertise<std_msgs::Empty>("/vslam/started",1);
+  
   GUI.StartParserThread(); // Start parsing of the console input
   atexit(GUI.StopParserThread);
   try
@@ -48,15 +53,16 @@ int main(int argc, char** argv)
     fclose (pFile);
     fclose (pFile1);*/
     System s;
+    pub_planner_reset.publish(std_msgs::Empty());
     s.Run();
   }
-  catch(CVD::Exceptions::All& e)
+catch(exception& e)
   {
-    
+    cout.flush();
     cout << endl;
-    cout << "!! Failed to run system; got exception. " << endl;
-    cout << "   Exception was: " << endl;
-    cout << e.what << endl;
+    cout << " PTAM CRASHED Exception was: " << endl;
+    cout << e.what() << endl;
+    pub_planner_reset.publish(std_msgs::Empty());
   }
 }
 

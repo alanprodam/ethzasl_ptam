@@ -518,7 +518,7 @@ void Tracker::TrackForInitialMap()
           mAutoreset=false;
         }
         mnInitialStage = TRAIL_TRACKING_COMPLETE;
-
+        
         //ROS_INFO_STREAM("Initialized map on level "<<level);
 
       }

@@ -74,6 +74,8 @@ private:
   ros::Publisher pub_info_;
   ros::Publisher pub_visibleCloud_;
   ros::Publisher pub_odom_;
+  ros::Publisher pub_planner_reset;
+  ros::Publisher pub_init;
   ros::ServiceServer srvPC_;
   ros::ServiceServer srvKF_;
   ros::ServiceServer srvPosePC_;
