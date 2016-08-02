@@ -210,9 +210,9 @@ MapMaker::~MapMaker()
 {
   mbBundleAbortRequested = true;
   stop(); // makes shouldStop() return true
-  cout << "Waiting for mapmaker to die.." << endl;
+  //cout << "Waiting for mapmaker to die.." << endl;
   join();
-  cout << " .. mapmaker has died." << endl;
+  //cout << " .. mapmaker has died." << endl;
 }
 
 

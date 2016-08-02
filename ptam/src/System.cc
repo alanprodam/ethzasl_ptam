@@ -169,7 +169,7 @@ void System::imageCallback(const sensor_msgs::ImageConstPtr & img)
   publishPoseAndInfo(img->header);
 
   publishPreviewImage(img_bw_, img->header);
-  std::cout << mpMapMaker->getMessageForUser();
+  cout << mpMapMaker->getMessageForUser();
 
   if(PtamParameters::fixparams().gui){
     string sCaption;

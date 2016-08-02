@@ -414,7 +414,7 @@ void Tracker::GUICommandHandler(string sCommand, string sParams)  // Called by t
   }
 
 
-  cout << "! Tracker::GUICommandHandler: unhandled command "<< sCommand << endl;
+  //cout << "! Tracker::GUICommandHandler: unhandled command "<< sCommand << endl;
   exit(1);
 }; 
 
@@ -508,7 +508,7 @@ void Tracker::TrackForInitialMap()
           mMap.vpKeyFrames[1]->dSceneDepthMedian = *middle;
 
           double scale = mOldKF->dSceneDepthMedian/mMap.vpKeyFrames[0]->dSceneDepthMedian;
-          std::cout<<"SCALE: "<<scale<<std::endl;
+          //cout<<"SCALE: "<<scale<<std::endl;
           mMapMaker.ApplyGlobalScaleToMap(scale);
           SE3<> transf = mOldKF->se3CfromW.inverse()*mMap.vpKeyFrames[0]->se3CfromW;
           mMapMaker.ApplyGlobalTransformationToMap(transf);
@@ -1453,7 +1453,7 @@ Vector<6> Tracker::CalcPoseUpdate(vector<TrackerData*> vTD, double dOverrideSigm
     nEstimator = 2;
   else
   {
-    cout << "Invalid TrackerMEstimator, choices are Tukey, Cauchy, Huber" << endl;
+    //cout << "Invalid TrackerMEstimator, choices are Tukey, Cauchy, Huber" << endl;
     nEstimator = 0;
     gvsEstimator = "Tukey";
   };
@@ -1555,7 +1555,7 @@ void Tracker::ApplyMotionModel()
     //                v6Velocity[0] = 0.0;
     //                v6Velocity[1] = 0.0;
   }
-  //  std::cout<<"motion:"<<std::endl<<v6Velocity.slice<3,3>()<<std::endl
+  //  cout<<"motion:"<<std::endl<<v6Velocity.slice<3,3>()<<std::endl
   //            <<(mso3CurrentImu.inverse()*mso3LastImu).ln()<<std::endl
   //            <<(mso3CurrentImu*mso3LastImu.inverse()).ln()<<std::endl
   //            <<(mso3LastImu.inverse()*mso3CurrentImu).ln()<<std::endl

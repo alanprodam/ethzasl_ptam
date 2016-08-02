@@ -260,7 +260,7 @@ void HomographyInit::DecomposeHomography()
 
   if(nCase != 1)
   {
-    cout << "  Homographyinit: This motion case is not implemented or is degenerate. Try again. " << endl;
+    //cout << "  Homographyinit: This motion case is not implemented or is degenerate. Try again. " << endl;
     return;
   }
 

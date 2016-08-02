@@ -15,7 +15,7 @@ inline bool isnan(double d) {return !(d==d);}
 #endif
 
 //Weiss{
-#define cout if(defDebugBundleMessages()) cout
+//#define //cout if(defDebugBundleMessages()) //cout
 
 inline bool defDebugBundleMessages()
 {
@@ -158,8 +158,8 @@ int Bundle::Compute(bool *pbAbortSignal)
       bNoError = Do_LM_Step<Huber>(pbAbortSignal);
     else
     {
-      cout << "Invalid BundleMEstimator selected !! " << endl;
-      cout << "Defaulting to Tukey." << endl;
+      //cout << "Invalid BundleMEstimator selected !! " << endl;
+      //cout << "Defaulting to Tukey." << endl;
       gvsMEstimator = "Tukey";
       bNoError = Do_LM_Step<Tukey>(pbAbortSignal);
     };
@@ -169,8 +169,8 @@ int Bundle::Compute(bool *pbAbortSignal)
   }
 
   if(mbHitMaxIterations)
-    cout << "  Hit max iterations." << endl;
-  cout << "Final Sigma Squared: " << mdSigmaSquared << " (= " << sqrt(mdSigmaSquared) / 4.685 << " pixels.)" << endl;
+    //cout << "  Hit max iterations." << endl;
+  //cout << "Final Sigma Squared: " << mdSigmaSquared << " (= " << sqrt(mdSigmaSquared) / 4.685 << " pixels.)" << endl;
   return mnAccepted;
 };
 
@@ -504,13 +504,13 @@ bool Bundle::Do_LM_Step(bool *pbAbortSignal)
     // Calculate new error by re-projecting, doing tukey, etc etc:
     dNewError = FindNewError<MEstimator>();
 
-    cout <<setprecision(1) << "L" << mdLambda << setprecision(3) <<  "\tOld " << dCurrentError << "  New " << dNewError << "  Diff " << dCurrentError - dNewError << "\t";
+    //cout <<setprecision(1) << "L" << mdLambda << setprecision(3) <<  "\tOld " << dCurrentError << "  New " << dNewError << "  Diff " << dCurrentError - dNewError << "\t";
 
     // Was the step good? If not, modify lambda and try again!!
     // (if it was good, will break from this loop.)
     if(dNewError > dCurrentError)
     {
-      cout << " TRY AGAIN " << endl;
+      //cout << " TRY AGAIN " << endl;
       ModifyLambda_BadStep();
     };
 
@@ -523,7 +523,7 @@ bool Bundle::Do_LM_Step(bool *pbAbortSignal)
 
   if(dNewError < dCurrentError) // Was the last step a good one?
   {
-    cout << " WINNER            ------------ " << endl;
+    //cout << " WINNER            ------------ " << endl;
     // Woo! got somewhere. Update lambda and make changes permanent.
     ModifyLambda_GoodStep();
     for(unsigned int j=0; j<mvCameras.size(); j++)
@@ -547,7 +547,7 @@ bool Bundle::Do_LM_Step(bool *pbAbortSignal)
   for(unsigned int i=0; i<vit.size(); i++)
     mMeasList.erase(vit[i]);
 
-  cout << "Nuked " << vit.size() << " measurements." << endl;
+  //cout << "Nuked " << vit.size() << " measurements." << endl;
   return true;
 }
 
@@ -567,7 +567,7 @@ double Bundle::FindNewError()
     if(v3Cam[2] <= 0)
     {
       dNewError += 1.0;
-      cout << ".";
+      //cout << ".";
       continue;
     };
     Vector<2> v2ImPlane = project(v3Cam);

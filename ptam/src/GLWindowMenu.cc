@@ -57,7 +57,7 @@ void GLWindowMenu::GUICommandHandler(string sCommand, string sParams)
   {
     if(vs.size()<3)
     {
-      cout<< "? GLWindowMenu.AddMenuButton: Need 3/4 params: Target Menu, Name, Command , NextMenu=\"\"" << endl;
+      //cout<< "? GLWindowMenu.AddMenuButton: Need 3/4 params: Target Menu, Name, Command , NextMenu=\"\"" << endl;
       return;
     };
     MenuItem m;
@@ -73,7 +73,7 @@ void GLWindowMenu::GUICommandHandler(string sCommand, string sParams)
   {
     if(vs.size()<3)
     {
-      cout<< "? GLWindowMenu.AddMenuToggle: Need 3/4 params: Target Menu, Name, gvar_int name , NextMenu=\"\"" << endl;
+      //cout<< "? GLWindowMenu.AddMenuToggle: Need 3/4 params: Target Menu, Name, gvar_int name , NextMenu=\"\"" << endl;
       return;
     };
     MenuItem m;
@@ -89,7 +89,7 @@ void GLWindowMenu::GUICommandHandler(string sCommand, string sParams)
   {
     if(vs.size()<3)
     {
-      cout<< "? GLWindowMenu.AddMenuMonitor: Need 3/4 params: Target Menu, Name, gvar name , NextMenu=\"\"" << endl;
+      //cout<< "? GLWindowMenu.AddMenuMonitor: Need 3/4 params: Target Menu, Name, gvar name , NextMenu=\"\"" << endl;
       return;
     };
     MenuItem m;
@@ -105,7 +105,7 @@ void GLWindowMenu::GUICommandHandler(string sCommand, string sParams)
   {
     if(vs.size()<5)
     {
-      cout<< "? GLWindowMenu.AddMenuSlider: Need 5/6 params: Target Menu, Name, gvar_int name, min, max, NextMenu=\"\"" << endl;
+      //cout<< "? GLWindowMenu.AddMenuSlider: Need 5/6 params: Target Menu, Name, gvar_int name, min, max, NextMenu=\"\"" << endl;
       return;
     };
     MenuItem m;

@@ -64,14 +64,14 @@ void GLWindow2::GUICommandHandler(string sCommand, string sParams)  // Called by
         AddMenu(vs[0], vs[1]);
         return;
       default:
-        cout << "? AddMenu: need one or two params (internal menu name, [caption])." << endl;
+        //cout << "? AddMenu: need one or two params (internal menu name, [caption])." << endl;
         return;
     };
   };
 
   // Should have returned to caller by now - if got here, a command which 
   // was not handled was registered....
-  cout << "! GLWindow::GUICommandHandler: unhandled command "<< sCommand << endl;
+  //cout << "! GLWindow::GUICommandHandler: unhandled command "<< sCommand << endl;
   exit(1);
 }; 
 
