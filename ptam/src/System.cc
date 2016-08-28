@@ -214,7 +214,7 @@ void System::odomCallback(const nav_msgs::OdometryPtr &odomPtr)
 {
   pthread_mutex_lock(&odom_mutex);
   if(mpTracker!=NULL)
-    mpTracker->odometry = *odomPtr;
+    mpTracker->odometry = odomPtr;
 
   pthread_mutex_unlock(&odom_mutex);
 }

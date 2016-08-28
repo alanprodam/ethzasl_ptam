@@ -44,7 +44,7 @@ struct Trail    // This struct is used for initial correspondences of the first 
 class Tracker
 {
 public:
-  nav_msgs::Odometry odometry;
+  nav_msgs::OdometryPtr odometry;
   Tracker(CVD::ImageRef irVideoSize, const ATANCamera &c, Map &m, MapMaker &mm);
 
   // TrackFrame is the main working part of the tracker: call this every frame.

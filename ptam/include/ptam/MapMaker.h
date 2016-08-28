@@ -42,7 +42,7 @@ struct MapMakerData
 class MapMaker : protected CVD::Thread
 {
 public:
-  nav_msgs::Odometry odom_first, odom_second;
+  nav_msgs::OdometryPtr odom_first, odom_second;
   MapMaker(Map &m, const ATANCamera &cam, ros::NodeHandle& nh);
   ~MapMaker();
 

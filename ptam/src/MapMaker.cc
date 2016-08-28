@@ -62,6 +62,8 @@ void MapMaker::Reset()
   mbResetDone = true;
   mbResetRequested = false;
   mbBundleAbortRequested = false;
+  odom_first.reset();
+  odom_second.reset();
 }
 
 // CHECK_RESET is a handy macro which makes the mapmaker thread stop
@@ -251,10 +253,12 @@ bool MapMaker::InitFromStereo(KeyFrame::Ptr kF,
   //mdWiggleScale=pPars.WiggleScale;
   //mdWiggleScale = *mgvdWiggleScale; // Cache this for the new map.
   //}
-  mdWiggleScale = sqrt((odom_first.pose.pose.position.x - odom_second.pose.pose.position.x)*(odom_first.pose.pose.position.x - odom_second.pose.pose.position.x)
-                    +  (odom_first.pose.pose.position.y - odom_second.pose.pose.position.y)*(odom_first.pose.pose.position.y - odom_second.pose.pose.position.y)
-                    +  (odom_first.pose.pose.position.z - odom_second.pose.pose.position.z)*(odom_first.pose.pose.position.z - odom_second.pose.pose.position.z));
-
+  if(odom_first and odom_second)
+    mdWiggleScale = sqrt((odom_first->pose.pose.position.x - odom_second->pose.pose.position.x)*(odom_first->pose.pose.position.x - odom_second->pose.pose.position.x)
+                      +  (odom_first->pose.pose.position.y - odom_second->pose.pose.position.y)*(odom_first->pose.pose.position.y - odom_second->pose.pose.position.y)
+                      +  (odom_first->pose.pose.position.z - odom_second->pose.pose.position.z)*(odom_first->pose.pose.position.z - odom_second->pose.pose.position.z));
+  else
+    mdWiggleScale = pPars.WiggleScale;
   mCamera.SetImageSize(kF->aLevels[0].im.size());
 
 //Weiss{

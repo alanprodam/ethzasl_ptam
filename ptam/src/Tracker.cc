@@ -93,6 +93,7 @@ void Tracker::Reset()
   mnFrame=0;
   mv6CameraVelocity = Zeros;
   mbJustRecoveredSoUseCoarse = false;
+  odometry.reset();
 }
 
 void Tracker::TrackFrame(CVD::Image<CVD::byte> &imFrame, bool bDraw, const TooN::SO3<> & imu){
