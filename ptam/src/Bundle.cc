@@ -471,11 +471,11 @@ bool Bundle::Do_LM_Step(bool *pbAbortSignal)
       }
       Vector<3> v3 = mvPoints[i].v3EpsilonB - v3Sum;
       vMapUpdates.slice(i * 3, 3) = mvPoints[i].m3VStarInv * v3;
-      if(isnan(vMapUpdates.slice(i * 3, 3) * vMapUpdates.slice(i * 3, 3)))
+      /*if(isnan(vMapUpdates.slice(i * 3, 3) * vMapUpdates.slice(i * 3, 3)))
       {
         cerr << "NANNERY! " << endl;
         cerr << mvPoints[i].m3VStarInv << endl;
-      };
+      };*/
     }
 
     // OK, got the two update vectors.

@@ -30,9 +30,9 @@ sensor_msgs::PointCloud2* pPC2;
 struct passwd *pw;
 int KFFlags_;
 unsigned int lastKFid;
-visualization_msgs::Marker path;
+visualization_msgs::Marker path, path_w2c;
 visualization_msgs::Marker kfPath;
-ros::Publisher pub_path, pub_pose, pub_next_pose;
+ros::Publisher pub_path, pub_pose, pub_next_pose, pub_camera_path;
 AxesArray tripods;
 AxesArray tripodshistory;
 
@@ -52,6 +52,7 @@ int main(int argc, char **argv)
   ros::Publisher pub_marker = n.advertise<visualization_msgs::MarkerArray>("vslam/kf_visualization_array", 1);
   ros::Publisher pub_kfPath = n.advertise<visualization_msgs::Marker>("vslam/pose_visualization_array", 1);
   pub_path = n.advertise<visualization_msgs::Marker>("vslam/path_visualization", 1);
+  pub_camera_path = n.advertise<visualization_msgs::Marker>("vslam/world_path_visualization", 1);
   pub_pose = n.advertise<geometry_msgs::PoseStamped>("vslam/pose_visualization", 1);
   pub_next_pose = n.advertise<geometry_msgs::PoseStamped>("vslam/pose_next_visualization", 1);
 
@@ -85,6 +86,20 @@ int main(int argc, char **argv)
   path.color.a=1.0;
   path.scale.x=0.1;
   path.pose.orientation.w=1.0;
+
+  path_w2c.id=0;
+  path_w2c.lifetime=ros::Duration(1);
+  path_w2c.header.frame_id = "/camera_depth_optical_frame";
+  path_w2c.header.stamp = ros::Time::now();
+  path_w2c.ns = "pointcloud_publisher";
+  path_w2c.action = visualization_msgs::Marker::ADD;
+  path_w2c.type = visualization_msgs::Marker::LINE_STRIP;
+  path_w2c.color.r=1.0;
+  path_w2c.color.g=1.0;
+  path_w2c.color.a=1.0;
+  path_w2c.scale.x=0.1;
+  path_w2c.pose.orientation.w=1.0;
+
 
   kfPath.id=0;
   kfPath.lifetime=ros::Duration(1);
@@ -160,6 +175,7 @@ int main(int argc, char **argv)
     if(show_path_)
     {
       pub_path.publish(path);
+      pub_camera_path.publish(path_w2c);
       pub_kfPath.publish(kfPath);
     }
 
@@ -182,6 +198,7 @@ void pathCallback(const geometry_msgs::PoseWithCovarianceStampedConstPtr & msg)
   geometry_msgs::Point p;
   memcpy(&(p.x),&(center[0]),sizeof(double)*3);
   path.points.push_back(p);
+  path_w2c.points.push_back(msg->pose.pose.position);
 
   geometry_msgs::PoseStamped ps;
   ps.header.frame_id="world";
@@ -199,6 +216,9 @@ void pathCallback(const geometry_msgs::PoseWithCovarianceStampedConstPtr & msg)
   //pub_next_pose
   while(path.points.size()>path_length_)
     path.points.erase(path.points.begin());
+
+  while(path_w2c.points.size()>path_length_)
+    path_w2c.points.erase(path_w2c.points.begin());
 
 }
 

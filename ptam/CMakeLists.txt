@@ -147,9 +147,9 @@ if (PKG_CONFIG_FOUND AND UNIX AND NOT APPLE)
    endif(GTK_FOUND)
 endif(PKG_CONFIG_FOUND AND UNIX AND NOT APPLE)
 
-#add_executable(remote_ptam src/RemotePtam.cpp)
-#add_dependencies(remote_ptam DEPS ${${PROJECT_NAME}_EXPORTED_TARGETS}})
-#target_link_libraries(remote_ptam ${GTK_LIBRARIES} ${OpenCV_LIBS} ${OpenCV_LIBRARIES} ${catkin_LIBRARIES})
+add_executable(remote_ptam src/RemotePtam.cpp)
+add_dependencies(remote_ptam DEPS ${${PROJECT_NAME}_EXPORTED_TARGETS}})
+target_link_libraries(remote_ptam ${GTK_LIBRARIES} ${OpenCV_LIBS} ${OpenCV_LIBRARIES} ${catkin_LIBRARIES})
 
 add_executable(ptam_visualizer src/PTAMVisualizer.cpp)
 add_dependencies(ptam_visualizer DEPS ${${PROJECT_NAME}_EXPORTED_TARGETS}})
