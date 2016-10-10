@@ -21,7 +21,7 @@ ATANCamera::ATANCamera(string sName)
   //GV2.Register(mgvvCameraParams, sName+".Parameters", mvDefaultParams, HIDDEN | FATAL_IF_NOT_DEFINED);
   //mvImageSize[0] = 640.0;
   //mvImageSize[1] = 480.0;
-  mvImageSize[0] =pPars.ImageSizeX;
+  mvImageSize[0] = pPars.ImageSizeX;
   mvImageSize[1] = pPars.ImageSizeY;
   //}
   RefreshParams();

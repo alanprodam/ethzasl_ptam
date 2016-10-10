@@ -31,6 +31,7 @@
 #include <pcl/point_types.h>
 
 #include <queue>
+#include <utility>
 
 #include "GLWindow2.h"
 //#include "ptam/RosNode.h"
@@ -73,6 +74,7 @@ private:
   ros::Publisher pub_pose_world_;       // camera in the world frame
   ros::Publisher pub_info_;
   ros::Publisher pub_visibleCloud_;
+  ros::Publisher pub_visiblePointPixels_;
   ros::Publisher pub_odom_;
   ros::Publisher pub_planner_reset;
   ros::Publisher pub_init;
@@ -122,7 +124,7 @@ private:
 
   /// finds object in queue with timestamp closest to timestamp. Requires that T has a std_msgs::header field named "header"
   template<class T> bool findClosest(const ros::Time & timestamp, std::queue<T> & queue, T * obj, const double & max_delay = 0.01);
-  pcl::PointCloud<pcl::PointXYZ> getVisiblePointsFromPose(TooN::SE3<double> pose);
+  std::pair<pcl::PointCloud<pcl::PointXYZ>,pcl::PointCloud<pcl::PointXYZ> > getVisiblePointsFromPose(TooN::SE3<double> pose);
   static void GUICommandCallBack(void* ptr, std::string sCommand, std::string sParams);
 
 };

@@ -46,6 +46,7 @@ System::System() :
   pub_pose_world_ = nh_.advertise<geometry_msgs::PoseWithCovarianceStamped> ("pose_world", 1);
   pub_info_ = nh_.advertise<ptam_com::ptam_info> ("info", 1);
   pub_visibleCloud_ = nh_.advertise<pcl::PointCloud<pcl::PointXYZ> > ("frame_points", 1);
+  pub_visiblePointPixels_ = nh_.advertise<pcl::PointCloud<pcl::PointXYZ> > ("frame_pixels", 1);
   
   pub_odom_ = nh_.advertise<nav_msgs::Odometry> ("odom", 1);
   srvPC_ = nh_.advertiseService("pointcloud", &System::pointcloudservice,this);
@@ -453,17 +454,21 @@ void System::publishPoseAndInfo(const std_msgs::Header & header)
     }
 }
 
-//static pcl::PointCloud<pcl::PointXYZ> funcVisiblePoints;
+//static pcl::PointCloud<pcl::PointXYZ> visiblePoints;
 
-pcl::PointCloud<pcl::PointXYZ> System::getVisiblePointsFromPose(TooN::SE3<double> pose)
+pair<pcl::PointCloud<pcl::PointXYZ>,pcl::PointCloud<pcl::PointXYZ> > System::getVisiblePointsFromPose(TooN::SE3<double> pose)
 {
-  pcl::PointCloud<pcl::PointXYZ> funcVisiblePoints;
+  pcl::PointCloud<pcl::PointXYZ> visiblePoints, visiblePixels;
   pthread_mutex_lock(&pointCloud_mutex);
   
   
-    //funcVisiblePoints.points.clear();
-    funcVisiblePoints.header.frame_id = "world";
-    funcVisiblePoints.height = 1;
+    //visiblePoints.points.clear();
+    visiblePoints.header.frame_id = "world";
+    visiblePixels.header.frame_id = "world";
+    const FixParams& pPars = PtamParameters::fixparams();
+    float width = pPars.ImageSizeX, height = pPars.ImageSizeY;
+    visiblePoints.height = 1;
+    visiblePixels.height = 1;
   #ifdef KF_REPROJ
   //possibly visible Keyframes
   vector<KeyFrame::Ptr> vpPVKeyFrames;
@@ -528,8 +533,9 @@ pcl::PointCloud<pcl::PointXYZ> System::getVisiblePointsFromPose(TooN::SE3<double
       // Otherwise, this point is suitable to be searched in the current image! Add to the PVS.
       TData.bSearched = false;
       TData.bFound = false;
-
-      funcVisiblePoints.points.push_back(pcl::PointXYZ(TData.Point->v3WorldPos[0], TData.Point->v3WorldPos[1], TData.Point->v3WorldPos[2]));
+      
+      visiblePixels.push_back(pcl::PointXYZ(TData.v2Image[0]/width, TData.v2Image[1]/height, 0));
+      visiblePoints.points.push_back(pcl::PointXYZ(TData.Point->v3WorldPos[0], TData.Point->v3WorldPos[1], TData.Point->v3WorldPos[2]));
     };
   };
    }
@@ -569,14 +575,16 @@ pcl::PointCloud<pcl::PointXYZ> System::getVisiblePointsFromPose(TooN::SE3<double
     // Otherwise, this point is suitable to be searched in the current image! Add to the PVS.
     TData.bSearched = false;
     TData.bFound = false;
-    funcVisiblePoints.points.push_back(pcl::PointXYZ(TData.Point->v3WorldPos[0], TData.Point->v3WorldPos[1], TData.Point->v3WorldPos[2]));
+    visiblePixels.push_back(pcl::PointXYZ(TData.v2Image[0]/width, TData.v2Image[1]/height, 0));
+    visiblePoints.points.push_back(pcl::PointXYZ(TData.Point->v3WorldPos[0], TData.Point->v3WorldPos[1], TData.Point->v3WorldPos[2]));
   };
   //slynen{ reprojection
 #endif
-    funcVisiblePoints.width = funcVisiblePoints.points.size();
+    visiblePixels.width = visiblePixels.points.size();
+    visiblePoints.width = visiblePoints.points.size();
   
     pthread_mutex_unlock(&pointCloud_mutex);
-    return funcVisiblePoints;
+    return make_pair(visiblePoints,visiblePixels);
 }
 
 void System::publishPreviewImage(CVD::Image<CVD::byte> & img, const std_msgs::Header & header)
@@ -642,7 +650,12 @@ void System::publishPreviewImage(CVD::Image<CVD::byte> & img, const std_msgs::He
     pub_preview_image_.publish(img_msg);
     cvReleaseImageHeader(&ocv_img);
   }
-  pub_visibleCloud_.publish(getVisiblePointsFromPose(mpTracker->GetCurrentPose()));
+  if(mpTracker->getTrailTrackingComplete())
+  {
+    pair<pcl::PointCloud<pcl::PointXYZ>,pcl::PointCloud<pcl::PointXYZ> > points = getVisiblePointsFromPose(mpTracker->GetCurrentPose());
+    pub_visibleCloud_.publish(points.first);
+    pub_visiblePointPixels_.publish(points.second);
+  }
 
 }
 
@@ -655,7 +668,7 @@ bool System::posepointcloudservice(ptam_com::PosePointCloudRequest & req, ptam_c
 
   TooN::SO3<double> R = quaternionToRotationMatrix(req.pose.pose.orientation);
 
-  pcl::toROSMsg(getVisiblePointsFromPose(TooN::SE3<double>(R,-R.get_matrix()*T)), resp.pointCloud);
+  pcl::toROSMsg(getVisiblePointsFromPose(TooN::SE3<double>(R,-R.get_matrix()*T)).first, resp.pointCloud);
 
   return true;
 }
@@ -715,16 +728,16 @@ bool System::pointcloudservice(ptam_com::PointCloudRequest & req, ptam_com::Poin
       if(n>resp.pointcloud.width-1) break;
       MapPoint& p = *(*it);
 
-      Vector<3,float> fvec = p.v3WorldPos,pVec;
+      Vector<3,float> fvec = p.v3WorldPos,pvec;
       uint32_t colorlvl = 0xff<<((3-p.nSourceLevel)*8);
       uint32_t lvl = p.nSourceLevel;
       uint32_t KF = p.pPatchSourceKF->ID;
 
-      pVec[0] = fvec[0];
-      pVec[1] = -fvec[2];
-      pVec[2] = -fvec[1];
+      pvec[0] = fvec[0];
+      pvec[1] = -fvec[2];
+      pvec[2] = -fvec[1];
 
-      memcpy(dat, &(pVec),3*sizeof(float));
+      memcpy(dat, &(pvec),3*sizeof(float));
       memcpy(dat+3*sizeof(uint32_t),&colorlvl,sizeof(uint32_t));
       memcpy(dat+4*sizeof(uint32_t),&lvl,sizeof(uint32_t));
       memcpy(dat+5*sizeof(uint32_t),&KF,sizeof(uint32_t));
