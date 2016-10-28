@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+<launch>
+    <node name="pose_pc_service_node" pkg="ptam" type="pose_pc_service_node" clear_params="true" respawn="true" output="screen">
+    	<rosparam file="$(find ptam)/PtamFixParams.yaml"/>
+    </node>
+	
+    <node name="ptam_visualizer" pkg="ptam" type="ptam_visualizer" clear_params="true" output="screen"/>
+</launch>
+

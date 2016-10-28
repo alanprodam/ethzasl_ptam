@@ -747,7 +747,7 @@ bool MapMaker::AddPointEpipolar(KeyFrame::Ptr kSrc,
 
   if(v2AlongProjectedLine * v2AlongProjectedLine < 0.00000001)
   {
-    mMessageForUser << "v2AlongProjectedLine too small." << endl;
+    //mMessageForUser << "v2AlongProjectedLine too small." << endl;
     return false;
   }
   normalize(v2AlongProjectedLine);

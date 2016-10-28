@@ -30,7 +30,6 @@ catkin_package(CATKIN_DEPENDS roscpp dynamic_reconfigure std_msgs image_transpor
 
 set(PTAM_SOURCE_FILES         
 	src/GLWindow2.cc       
-	src/main.cc      
 	src/MapViewer.cc 
 	src/ATANCamera.cc          
 	src/GLWindowMenu.cc    
@@ -116,7 +115,7 @@ add_definitions(-DKF_REPROJ)
 set(CMAKE_BUILD_TYPE Release)
 
 # PTAM executable
-add_executable(ptam ${PTAM_SOURCE_FILES} ${PTAM_HEADER_FILES})
+add_executable(ptam src/main.cc ${PTAM_SOURCE_FILES} ${PTAM_HEADER_FILES})
 set_property(TARGET ptam APPEND_STRING PROPERTY COMPILE_FLAGS "-D_LINUX -D_REENTRANT -Wall -march=native ")
 IF(CMAKE_BUILD_TYPE MATCHES Release)
  set_property(TARGET ptam APPEND_STRING PROPERTY COMPILE_FLAGS "-O3 ")

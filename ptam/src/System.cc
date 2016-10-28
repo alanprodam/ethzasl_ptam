@@ -732,9 +732,14 @@ bool System::pointcloudservice(ptam_com::PointCloudRequest & req, ptam_com::Poin
       uint32_t colorlvl = 0xff<<((3-p.nSourceLevel)*8);
       uint32_t lvl = p.nSourceLevel;
       uint32_t KF = p.pPatchSourceKF->ID;
-
+/*
       pvec[0] = fvec[0];
-      pvec[1] = -fvec[2];
+      pvec[1] = fvec[2];
+      pvec[2] = -fvec[1];
+*/
+
+      pvec[0] = -fvec[2];
+      pvec[1] = -fvec[0];
       pvec[2] = -fvec[1];
 
       memcpy(dat, &(pvec),3*sizeof(float));
