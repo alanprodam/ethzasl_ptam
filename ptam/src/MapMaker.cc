@@ -17,6 +17,7 @@
 #include <fstream>
 #include <algorithm>
 #include <cmath>
+#include <queue>
 
 #include <ptam/Params.h>
 
@@ -245,7 +246,8 @@ Vector<3> MapMaker::ReprojectPoint(SE3<> se3AfromB, const Vector<2> &v2A, const 
 bool MapMaker::InitFromStereo(KeyFrame::Ptr kF,
                               KeyFrame::Ptr kS,
                               vector<pair<ImageRef, ImageRef> > &vTrailMatches,
-                              SE3<> &se3TrackerPose)
+                              SE3<> &se3TrackerPose,
+                              float &alpha_cap)
 {
   //Weiss{
   //mdWiggleScale = 0.1;
@@ -498,7 +500,29 @@ bool MapMaker::InitFromStereo(KeyFrame::Ptr kF,
     octomap_interface.addKeyFrame(pkFirst);
     octomap_interface.addKeyFrame(pkSecond);
   //}
+    vector<float> alpha;
+    Vector<3> A = pkFirst->se3CfromW.get_translation(), B = pkSecond->se3CfromW.get_translation(), X;
+    for(unsigned int i=0; i<mMap.vpPoints.size(); i++)
+    {
+      X = mMap.vpPoints[i]->v3WorldPos;
+    
+        alpha.push_back(acos((X-A)*(X-B)/(norm(X-A)*norm(X-B))));
+    }
+    sort(alpha.begin(),alpha.end());
 
+    float upper_quart_index = alpha.size()*3.0/4.0;
+    if(int(upper_quart_index) == upper_quart_index)
+      alpha_cap = alpha[int(upper_quart_index)];
+    else
+    {
+      upper_quart_index -= 0.25;
+      if(int(upper_quart_index) == upper_quart_index)
+        alpha_cap = alpha[int(upper_quart_index)];
+      else 
+        alpha_cap = (alpha[int(upper_quart_index)] + alpha[int(upper_quart_index) + 1])/2.0;
+    }
+
+    
   return true;
 }
 

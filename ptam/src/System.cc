@@ -456,7 +456,7 @@ void System::publishPoseAndInfo(const std_msgs::Header & header)
 
 //static pcl::PointCloud<pcl::PointXYZ> visiblePoints;
 
-pair<pcl::PointCloud<pcl::PointXYZ>,pcl::PointCloud<pcl::PointXYZ> > System::getVisiblePointsFromPose(TooN::SE3<double> pose)
+pair<pcl::PointCloud<pcl::PointXYZ>,float > System::getVisiblePointsFromPose(TooN::SE3<double> pose, bool print)
 {
   pcl::PointCloud<pcl::PointXYZ> visiblePoints, visiblePixels;
   pthread_mutex_lock(&pointCloud_mutex);
@@ -469,6 +469,7 @@ pair<pcl::PointCloud<pcl::PointXYZ>,pcl::PointCloud<pcl::PointXYZ> > System::get
     float width = pPars.ImageSizeX, height = pPars.ImageSizeY;
     visiblePoints.height = 1;
     visiblePixels.height = 1;
+  vector<TrackerData> vTData;
   #ifdef KF_REPROJ
   //possibly visible Keyframes
   vector<KeyFrame::Ptr> vpPVKeyFrames;
@@ -529,7 +530,7 @@ pair<pcl::PointCloud<pcl::PointXYZ>,pcl::PointCloud<pcl::PointXYZ> > System::get
 
       if(TData.nSearchLevel == -1)
         continue;   // a negative search pyramid level indicates an inappropriate warp for this view, so skip.
-
+      vTData.push_back(TData);
       // Otherwise, this point is suitable to be searched in the current image! Add to the PVS.
       TData.bSearched = false;
       TData.bFound = false;
@@ -573,18 +574,30 @@ pair<pcl::PointCloud<pcl::PointXYZ>,pcl::PointCloud<pcl::PointXYZ> > System::get
       continue;   // a negative search pyramid level indicates an inappropriate warp for this view, so skip.
 
     // Otherwise, this point is suitable to be searched in the current image! Add to the PVS.
+    vTData.push_back(TData);
     TData.bSearched = false;
     TData.bFound = false;
+
+    
+
     visiblePixels.push_back(pcl::PointXYZ(TData.v2Image[0]/width, TData.v2Image[1]/height, 0));
     visiblePoints.points.push_back(pcl::PointXYZ(TData.Point->v3WorldPos[0], TData.Point->v3WorldPos[1], TData.Point->v3WorldPos[2]));
   };
   //slynen{ reprojection
 #endif
+  /*vector<TrackerData*> vTD;
+  for(int i=0;i<vTData.size();i++)
+    vTD.push_back(&vTData[i]);*/
+  //Matrix<6> covariance = mpTracker->CalcPoseCovariance(vTD, pose);
+  float quality = mpTracker->CalcPoseLocalizationQuality(vTData, pose, false);
+  //cout<<"couvariances"<<endl<<<<endl;
+
     visiblePixels.width = visiblePixels.points.size();
     visiblePoints.width = visiblePoints.points.size();
-  
+    vTData.clear();
+    //vTD.clear()
     pthread_mutex_unlock(&pointCloud_mutex);
-    return make_pair(visiblePoints,visiblePixels);
+    return make_pair(visiblePoints,quality);
 }
 
 void System::publishPreviewImage(CVD::Image<CVD::byte> & img, const std_msgs::Header & header)
@@ -652,9 +665,9 @@ void System::publishPreviewImage(CVD::Image<CVD::byte> & img, const std_msgs::He
   }
   if(mpTracker->getTrailTrackingComplete())
   {
-    pair<pcl::PointCloud<pcl::PointXYZ>,pcl::PointCloud<pcl::PointXYZ> > points = getVisiblePointsFromPose(mpTracker->GetCurrentPose());
+    pair<pcl::PointCloud<pcl::PointXYZ>, float > points = getVisiblePointsFromPose(mpTracker->GetCurrentPose(), false);
     pub_visibleCloud_.publish(points.first);
-    pub_visiblePointPixels_.publish(points.second);
+    //pub_visiblePointPixels_.publish(points.second);
   }
 
 }
@@ -668,7 +681,11 @@ bool System::posepointcloudservice(ptam_com::PosePointCloudRequest & req, ptam_c
 
   TooN::SO3<double> R = quaternionToRotationMatrix(req.pose.pose.orientation);
 
-  pcl::toROSMsg(getVisiblePointsFromPose(TooN::SE3<double>(R,-R.get_matrix()*T)).first, resp.pointCloud);
+  pair<pcl::PointCloud<pcl::PointXYZ>, float > result = getVisiblePointsFromPose(TooN::SE3<double>(R,-R.get_matrix()*T), false);
+  pcl::toROSMsg(result.first, resp.pointCloud);
+  resp.quality = result.second;
+  /*for (unsigned int i = 0; i < resp.covariance.size(); i++)
+        resp.covariance[i] = sqrt(fabs(result.second[i % 6][i / 6]));*/
 
   return true;
 }
@@ -732,17 +749,17 @@ bool System::pointcloudservice(ptam_com::PointCloudRequest & req, ptam_com::Poin
       uint32_t colorlvl = 0xff<<((3-p.nSourceLevel)*8);
       uint32_t lvl = p.nSourceLevel;
       uint32_t KF = p.pPatchSourceKF->ID;
-/*
-      pvec[0] = fvec[0];
-      pvec[1] = fvec[2];
+
+      /*pvec[0] = fvec[0];
+      pvec[1] = -fvec[2];
       pvec[2] = -fvec[1];
 */
 
-      pvec[0] = -fvec[2];
+/*      pvec[0] = -fvec[2];
       pvec[1] = -fvec[0];
       pvec[2] = -fvec[1];
-
-      memcpy(dat, &(pvec),3*sizeof(float));
+*/
+      memcpy(dat, &(fvec),3*sizeof(float));
       memcpy(dat+3*sizeof(uint32_t),&colorlvl,sizeof(uint32_t));
       memcpy(dat+4*sizeof(uint32_t),&lvl,sizeof(uint32_t));
       memcpy(dat+5*sizeof(uint32_t),&KF,sizeof(uint32_t));

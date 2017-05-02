@@ -5,6 +5,10 @@
 #include <TooN/Cholesky.h>
 #include <fstream>
 #include <iomanip>
+#include <cmath>
+#include <stdlib.h>
+
+#include <stdio.h>
 #//include <gvars3/instances.h>
 
 //using namespace GVars3;
@@ -76,7 +80,7 @@ int Bundle::AddPoint(Vector<3> v3Pos)
 {
   int n = mvPoints.size();
   Point p;
-  if(isnan(v3Pos * v3Pos))
+  if(::isnan(v3Pos * v3Pos))
   {
     cerr << " You sucker, tried to give me a nan " << v3Pos << endl;
     v3Pos = Zeros;

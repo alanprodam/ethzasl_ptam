@@ -27,6 +27,8 @@
 #include "Relocaliser.h"
 #include "ptam/Params.h"
 
+#include <TooN/TooN.h>
+
 #include <sstream>
 #include <vector>
 #include <list>
@@ -72,6 +74,8 @@ public:
       Vector<6> CalcPoseUpdate(std::vector<TrackerData*> vTD,
                              double dOverrideSigma = 0.0,
                              bool bMarkOutliers = false); // Updates pose from found points.
+      float CalcPoseLocalizationQuality(std::vector<TrackerData> vTD, 
+                                   SE3<> pose, bool print);
 
       int SearchForPoints(std::vector<TrackerData*> &vTD,
                         int nRange,
@@ -169,6 +173,14 @@ protected:
     struct Command {std::string sCommand; std::string sParams; };
     std::vector<Command> mvQueuedCommands;
 
+  static const int NBINS_ROWS = 8;
+  static const int NBINS_COLS = 8;
+  TooN::Matrix<NBINS_ROWS, NBINS_COLS> s0, qb_0, sr_0, dmax_0;
+  TooN::Matrix<NBINS_ROWS/2, NBINS_COLS/2> s1, qb_1, sr_1, dmax_1;
+  TooN::Matrix<NBINS_ROWS/4, NBINS_COLS/4> s2, qb_2, sr_2, dmax_2;
+  TooN::Matrix<NBINS_ROWS/8, NBINS_COLS/8> s3, qb_3, sr_3, dmax_3;
+  TooN::Vector<4> L, S_const;
+  float alpha_cap;
 
 };
 

@@ -49,7 +49,7 @@ public:
   // Make a map from scratch. Called by the tracker.
   bool InitFromStereo(KeyFrame::Ptr kFirst, KeyFrame::Ptr kSecond,
                       std::vector<std::pair<CVD::ImageRef, CVD::ImageRef> > &vMatches,
-                      SE3<> &se3CameraPos);
+                      SE3<> &se3CameraPos, float &alpha_cap);
 
   bool InitFromStereo_OLD(KeyFrame::Ptr kFirst, KeyFrame::Ptr kSecond,  // EXPERIMENTAL HACK
                           std::vector<std::pair<CVD::ImageRef, CVD::ImageRef> > &vMatches,

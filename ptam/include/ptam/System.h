@@ -124,7 +124,7 @@ private:
 
   /// finds object in queue with timestamp closest to timestamp. Requires that T has a std_msgs::header field named "header"
   template<class T> bool findClosest(const ros::Time & timestamp, std::queue<T> & queue, T * obj, const double & max_delay = 0.01);
-  std::pair<pcl::PointCloud<pcl::PointXYZ>,pcl::PointCloud<pcl::PointXYZ> > getVisiblePointsFromPose(TooN::SE3<double> pose);
+  std::pair<pcl::PointCloud<pcl::PointXYZ>,float > getVisiblePointsFromPose(TooN::SE3<double> pose, bool print);
   static void GUICommandCallBack(void* ptr, std::string sCommand, std::string sParams);
 
 };

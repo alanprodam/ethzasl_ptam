@@ -20,6 +20,7 @@
 #include <opencv/cv.h>
 
 #include <fstream>
+#include <iterator>
 #include <fcntl.h>
 #include <math.h>
 #include <vector>
@@ -53,7 +54,67 @@ Tracker::Tracker(ImageRef irVideoSize, const ATANCamera &c, Map &m, MapMaker &mm
 
   mpSBILastFrame = NULL;
   mpSBIThisFrame = NULL;
+ 
+  L = TooN::makeVector(1,2,4,8);
+  S_const = TooN::makeVector(0.1, 0.2, 1.5, 2.5);
+  int nrows = NBINS_ROWS, ncols = NBINS_COLS;
+  for(int i=0; i<nrows;i++)
+    for(int j=0; j<ncols;j++)
+    {  
+      if(i<nrows/2 and j<ncols/2)
+        dmax_0[i][j] = sqrt((nrows-i)*(nrows-i) + (ncols-j)*(ncols-j));
+      else if(i<nrows/2 and j>ncols/2 - 1)
+        dmax_0[i][j] = sqrt((nrows-i)*(nrows-i) + j*j);
+      else if(i>nrows/2 - 1 and j<ncols/2)
+        dmax_0[i][j] = sqrt(i*i + (ncols-j)*(ncols-j));
+      else
+        dmax_0[i][j] = sqrt(i*i + j*j);
+    }
 
+  nrows /= 2;
+  ncols /= 2;
+  for(int i=0; i<nrows;i++)
+    for(int j=0; j<ncols;j++)
+    {  
+      if(i<nrows/2 and j<ncols/2)
+        dmax_1[i][j] = sqrt((nrows-i)*(nrows-i) + (ncols-j)*(ncols-j));
+      else if(i<nrows/2 and j>ncols/2 - 1)
+        dmax_1[i][j] = sqrt((nrows-i)*(nrows-i) + j*j);
+      else if(i>nrows/2 - 1 and j<ncols/2)
+        dmax_1[i][j] = sqrt(i*i + (ncols-j)*(ncols-j));
+      else
+        dmax_1[i][j] = sqrt(i*i + j*j);
+    }
+
+  nrows /= 2;
+  ncols /= 2;
+  for(int i=0; i<nrows;i++)
+    for(int j=0; j<ncols;j++)
+    {  
+      if(i<nrows/2 and j<ncols/2)
+        dmax_2[i][j] = sqrt((nrows-i)*(nrows-i) + (ncols-j)*(ncols-j));
+      else if(i<nrows/2 and j>ncols/2 - 1)
+        dmax_2[i][j] = sqrt((nrows-i)*(nrows-i) + j*j);
+      else if(i>nrows/2 - 1 and j<ncols/2)
+        dmax_2[i][j] = sqrt(i*i + (ncols-j)*(ncols-j));
+      else
+        dmax_2[i][j] = sqrt(i*i + j*j);
+    }
+
+  nrows /= 2;
+  ncols /= 2;
+  for(int i=0; i<nrows;i++)
+    for(int j=0; j<ncols;j++)
+    {  
+      if(i<nrows/2 and j<ncols/2)
+        dmax_3[i][j] = sqrt((nrows-i)*(nrows-i) + (ncols-j)*(ncols-j));
+      else if(i<nrows/2 and j>ncols/2 - 1)
+        dmax_3[i][j] = sqrt((nrows-i)*(nrows-i) + j*j);
+      else if(i>nrows/2 - 1 and j<ncols/2)
+        dmax_3[i][j] = sqrt(i*i + (ncols-j)*(ncols-j));
+      else
+        dmax_3[i][j] = sqrt(i*i + j*j);
+    }
   // Most of the initialisation is done in Reset()
   Reset();
 }
@@ -480,8 +541,9 @@ void Tracker::TrackForInitialMap()
 
       bool initret=false;
       mMapMaker.odom_second = odometry;
-      initret=mMapMaker.InitFromStereo(mFirstKF, mCurrentKF, vMatches, mse3CamFromWorld);  // This will take some time!
 
+      initret=mMapMaker.InitFromStereo(mFirstKF, mCurrentKF, vMatches, mse3CamFromWorld, alpha_cap);  // This will take some time!
+      cout<<"alpha_cap "<<alpha_cap<<endl;
       if(initret)
       {
         if (mAutoreset)
@@ -640,274 +702,6 @@ int Tracker::TrailTracking_Advance()
   mPreviousFrameKF = mCurrentKF;
   return nGoodTrails;
 }
-
-vector<TrackerData> Tracker::reTrack(SE3<> pose)
-{ 
-  vector<TrackerData> result;
-  /*for(unsigned int i=0; i<mMap.vpPoints.size(); i++)
-  {
-    MapPoint &p= *(mMap.vpPoints[i]);
-    // Ensure that this map point has an associated TrackerData struct.
-    if(!p.pTData) p.pTData = new TrackerData(mMap.vpPoints[i]);
-    TrackerData &TData = *p.pTData;
-
-    // Project according to current view, and if it's not in the image, skip.
-    TData.Project(pose, mCamera);
-    if(!TData.bInImage)
-      continue;
-
-    // Calculate camera projection derivatives of this point.
-    TData.GetDerivsUnsafe(mCamera);
-
-    // And check what the PatchFinder (included in TrackerData) makes of the mappoint in this view..
-    TData.nSearchLevel = TData.Finder.CalcSearchLevelAndWarpMatrix(TData.Point, pose, TData.m2CamDerivs);
-    if(TData.nSearchLevel == -1)
-      continue;   // a negative search pyramid level indicates an inappropriate warp for this view, so skip.
-
-    // Otherwise, this point is suitable to be searched in the current image! Add to the PVS.
-    TData.bSearched = false;
-    TData.bFound = false;
-    //avPVS[TData.nSearchLevel].push_back(&TData);
-    result.push_back(TData);
-  };*/
-
-/*
-    for(vector<TrackerData*>::reverse_iterator it = vIterationSet.rbegin();
-        it!= vIterationSet.rend();
-        it++)
-    {
-      if(! (*it)->bFound)
-        continue;
-      
-      result.push_back(*(*it));
-    }*/
-    
-   return result;
-  //slynen{ reprojection
-//#endif
-/*  //}
-
-  // Next: A large degree of faffing about and deciding which points are going to be measured!
-  // First, randomly shuffle the individual levels of the PVS.
-  for(int i=0; i<LEVELS; i++)
-    random_shuffle(avPVS[i].begin(), avPVS[i].end());
-
-  // The next two data structs contain the list of points which will next
-  // be searched for in the image, and then used in pose update.
-  vector<TrackerData*> vNextToSearch;
-  vector<TrackerData*> vIterationSet;
-
-  // Tunable parameters to do with the coarse tracking stage:
-
-  //Weiss{
-  
-  const ptam::PtamParamsConfig& pPars = PtamParameters::varparams();
-  unsigned int gvnCoarseMin = pPars.CoarseMin;
-  unsigned int gvnCoarseMax = pPars.CoarseMax;
-  unsigned int gvnCoarseRange = pPars.CoarseRange;
-  int gvnCoarseSubPixIts = pPars.CoarseSubPixIts;
-  int gvnCoarseDisabled = pPars.DisableCoarse;
-  double gvdCoarseMinVel = pPars.CoarseMinVelocity;
-  //static gvar3<unsigned int> gvnCoarseMin("Tracker.CoarseMin", 20, SILENT);   // Min number of large-scale features for coarse stage
-  //static gvar3<unsigned int> gvnCoarseMax("Tracker.CoarseMax", 60, SILENT);   // Max number of large-scale features for coarse stage
-  //static gvar3<unsigned int> gvnCoarseRange("Tracker.CoarseRange", 30, SILENT);       // Pixel search radius for coarse features
-  //static gvar3<int> gvnCoarseSubPixIts("Tracker.CoarseSubPixIts", 8, SILENT); // Max sub-pixel iterations for coarse features
-  //static gvar3<int> gvnCoarseDisabled("Tracker.DisableCoarse", 0, SILENT);    // Set this to 1 to disable coarse stage (except after recovery)
-  //static gvar3<double> gvdCoarseMinVel("Tracker.CoarseMinVelocity", 0.006, SILENT);  // Speed above which coarse stage is used.
-  //}
-  unsigned int nCoarseMax = gvnCoarseMax;
-  unsigned int nCoarseRange = gvnCoarseRange;
-
-  bool mybDidCoarse = false;
-
-  // Set of heuristics to check if we should do a coarse tracking stage.
-  bool bTryCoarse = true;
-  if(gvnCoarseDisabled ||
-      mdMSDScaledVelocityMagnitude < gvdCoarseMinVel  ||
-      nCoarseMax == 0)
-    bTryCoarse = false;
-  if(mbJustRecoveredSoUseCoarse)
-  {
-    bTryCoarse = true;
-    nCoarseMax *=2;
-    nCoarseRange *=2;
-    mbJustRecoveredSoUseCoarse = false;
-  };
-
-  // If we do want to do a coarse stage, also check that there's enough high-level
-  // PV map points. We use the lowest-res two pyramid levels (LEVELS-1 and LEVELS-2),
-  // with preference to LEVELS-1.
-  if(bTryCoarse && avPVS[LEVELS-1].size() + avPVS[LEVELS-2].size() > gvnCoarseMin )
-  {
-    // Now, fill the vNextToSearch struct with an appropriate number of
-    // TrackerDatas corresponding to coarse map points! This depends on how many
-    // there are in different pyramid levels compared to CoarseMin and CoarseMax.
-
-    if(avPVS[LEVELS-1].size() <= nCoarseMax)
-    { // Fewer than CoarseMax in LEVELS-1? then take all of them, and remove them from the PVS list.
-      vNextToSearch = avPVS[LEVELS-1];
-      avPVS[LEVELS-1].clear();
-    }
-    else
-    { // ..otherwise choose nCoarseMax at random, again removing from the PVS list.
-      for(unsigned int i=0; i<nCoarseMax; i++)
-        vNextToSearch.push_back(avPVS[LEVELS-1][i]);
-      avPVS[LEVELS-1].erase(avPVS[LEVELS-1].begin(), avPVS[LEVELS-1].begin() + nCoarseMax);
-    }
-
-    // If didn't source enough from LEVELS-1, get some from LEVELS-2... same as above.
-    if(vNextToSearch.size() < nCoarseMax)
-    {
-      unsigned int nMoreCoarseNeeded = nCoarseMax - vNextToSearch.size();
-      if(avPVS[LEVELS-2].size() <= nMoreCoarseNeeded)
-      {
-        vNextToSearch = avPVS[LEVELS-2];
-        avPVS[LEVELS-2].clear();
-      }
-      else
-      {
-        for(unsigned int i=0; i<nMoreCoarseNeeded; i++)
-          vNextToSearch.push_back(avPVS[LEVELS-2][i]);
-        avPVS[LEVELS-2].erase(avPVS[LEVELS-2].begin(), avPVS[LEVELS-2].begin() + nMoreCoarseNeeded);
-      }
-    }
-    // Now go and attempt to find these points in the image!
-    unsigned int nFound = checkVisiblePoints(vNextToSearch, nCoarseRange, gvnCoarseSubPixIts);
-    vIterationSet = vNextToSearch;  // Copy over into the to-be-optimised list.
-    if(nFound >= gvnCoarseMin)  // Were enough found to do any meaningful optimisation?
-    {
-      mybDidCoarse = true;
-      for(int iter = 0; iter<10; iter++) // If so: do ten Gauss-Newton pose updates iterations.
-      {
-        if(iter != 0)
-        { // Re-project the points on all but the first iteration.
-          for(unsigned int i=0; i<vIterationSet.size(); i++)
-            if(vIterationSet[i]->bFound)
-              vIterationSet[i]->ProjectAndDerivs(pose, mCamera);
-        }
-        for(unsigned int i=0; i<vIterationSet.size(); i++)
-          if(vIterationSet[i]->bFound)
-            vIterationSet[i]->CalcJacobian();
-        double dOverrideSigma = 0.0;
-        // Hack: force the MEstimator to be pretty brutal
-        // with outliers beyond the fifth iteration.
-        if(iter > 5)
-          dOverrideSigma = 1.0;
-
-        // Calculate and apply the pose update...
-        Vector<6> v6Update =
-            CalcPoseUpdate(vIterationSet, dOverrideSigma);
-        pose = SE3<>::exp(v6Update) * pose;
-      };
-    }
-  };
-
-  // So, at this stage, we may or may not have done a coarse tracking stage.
-  // Now do the fine tracking stage. This needs many more points!
-
-  int nFineRange = 10;  // Pixel search range for the fine stage.
-  if(mybDidCoarse)       // Can use a tighter search if the coarse stage was already done.
-    nFineRange = 5;
-
-  // What patches shall we use this time? The high-level ones are quite important,
-  // so do all of these, with sub-pixel refinement.
-  {
-    int l = LEVELS - 1;
-    for(unsigned int i=0; i<avPVS[l].size(); i++)
-      avPVS[l][i]->ProjectAndDerivs(pose, mCamera);
-    checkVisiblePoints(avPVS[l], nFineRange, 8);
-    for(unsigned int i=0; i<avPVS[l].size(); i++)
-      vIterationSet.push_back(avPVS[l][i]);  // Again, plonk all searched points onto the (maybe already populate) vIterationSet.
-  };
-
-  // All the others levels: Initially, put all remaining potentially visible patches onto vNextToSearch.
-  vNextToSearch.clear();
-  for(int l=LEVELS - 2; l>=0; l--)
-    for(unsigned int i=0; i<avPVS[l].size(); i++)
-      vNextToSearch.push_back(avPVS[l][i]);
-
-  // But we haven't got CPU to track _all_ patches in the map - arbitrarily limit
-  // ourselves to 1000, and choose these randomly.
-  //Weiss{
-  int gvnMaxPatchesPerFrame = pPars.MaxPatchesPerFrame;
-  //static gvar3<int> gvnMaxPatchesPerFrame("Tracker.MaxPatchesPerFrame", 1000, SILENT);
-  //}
-  int nFinePatchesToUse = gvnMaxPatchesPerFrame - vIterationSet.size();
-  if(((int) vNextToSearch.size() > nFinePatchesToUse) && (nFinePatchesToUse>0))
-  {
-    random_shuffle(vNextToSearch.begin(), vNextToSearch.end());
-    vNextToSearch.resize(nFinePatchesToUse); // Chop!
-  };
-
-  // If we did a coarse tracking stage: re-project and find derivs of fine points
-  if(mybDidCoarse)
-    for(unsigned int i=0; i<vNextToSearch.size(); i++)
-      vNextToSearch[i]->ProjectAndDerivs(pose, mCamera);
-
-  // Find fine points in image:
-  checkVisiblePoints(vNextToSearch, nFineRange, 0);
-  // And attach them all to the end of the optimisation-set.
-  for(unsigned int i=0; i<vNextToSearch.size(); i++)
-    vIterationSet.push_back(vNextToSearch[i]);
-
-  // Again, ten gauss-newton pose update iterations.
-  Vector<6> v6LastUpdate;
-  v6LastUpdate = Zeros;
-  for(int iter = 0; iter<10; iter++)
-  {
-    bool bNonLinearIteration; // For a bit of time-saving: don't do full nonlinear
-    // reprojection at every iteration - it really isn't necessary!
-    if(iter == 0 || iter == 4 || iter == 9)
-      bNonLinearIteration = true;   // Even this is probably overkill, the reason we do many
-    else                            // iterations is for M-Estimator convergence rather than
-      bNonLinearIteration = false;  // linearisation effects.
-
-    if(iter != 0)   // Either way: first iteration doesn't need projection update.
-    {
-      if(bNonLinearIteration)
-      {
-        for(unsigned int i=0; i<vIterationSet.size(); i++)
-          if(vIterationSet[i]->bFound)
-            vIterationSet[i]->ProjectAndDerivs(pose, mCamera);
-      }
-      else
-      {
-        for(unsigned int i=0; i<vIterationSet.size(); i++)
-          if(vIterationSet[i]->bFound)
-            vIterationSet[i]->LinearUpdate(v6LastUpdate);
-      };
-    }
-
-    if(bNonLinearIteration)
-      for(unsigned int i=0; i<vIterationSet.size(); i++)
-        if(vIterationSet[i]->bFound)
-          vIterationSet[i]->CalcJacobian();
-
-    // Again, an M-Estimator hack beyond the fifth iteration.
-    double dOverrideSigma = 0.0;
-    if(iter > 5)
-      dOverrideSigma = 16.0;
-
-    // Calculate and update pose; also store update vector for linear iteration updates.
-    Vector<6> v6Update =
-        CalcPoseUpdate(vIterationSet, dOverrideSigma, iter==9);
-    pose = SE3<>::exp(v6Update) * pose;
-    v6LastUpdate = v6Update;
-  };
-  vector<TrackerData> result;
-    for(vector<TrackerData*>::reverse_iterator it = vIterationSet.rbegin();
-        it!= vIterationSet.rend();
-        it++)
-    {
-      if(! (*it)->bFound)
-        continue;
-      
-      result.push_back(*(*it));
-    }
-    
-   return result;*/
-}
-
 
 // TrackMap is the main purpose of the Tracker.
 // It first projects all map points into the image to find a potentially-visible-set (PVS);
@@ -1318,59 +1112,7 @@ void Tracker::TrackMap()
   }
 }
 
-int Tracker::checkVisiblePoints(std::vector<TrackerData*> &vTD, int nRange, int nSubPixIts)  // Finds points in the image
-{
-  int nFound = 0;
-  for(unsigned int i=0; i<vTD.size(); i++)   // for each point..
-  {
-    // First, attempt a search at pixel locations which are FAST corners.
-    // (PatchFinder::FindPatchCoarse)
-    TrackerData &TD = *vTD[i];
-    PatchFinder &Finder = TD.Finder;
-    Finder.MakeTemplateCoarseCont(TD.Point);
-    if(Finder.TemplateBad())
-    {
-      TD.bInImage = TD.bPotentiallyVisible = TD.bFound = false;
-      continue;
-    }
-    
-    bool bFound =
-        Finder.FindPatchCoarse(ir(TD.v2Image), mCurrentKF, nRange);
-    TD.bSearched = true;
-    if(!bFound)
-    {
-      TD.bFound = false;
-      continue;
-    }
 
-    TD.bFound = true;
-    TD.dSqrtInvNoise = (1.0 / Finder.GetLevelScale());
-
-    nFound++;
-    
-    // Found the patch in coarse search - are Sub-pixel iterations wanted too?
-    if(nSubPixIts > 0)
-    {
-      TD.bDidSubPix = true;
-      Finder.MakeSubPixTemplate();
-      bool bSubPixConverges=Finder.IterateSubPixToConvergence(*mCurrentKF, nSubPixIts);
-      if(!bSubPixConverges)
-      { // If subpix doesn't converge, the patch location is probably very dubious!
-        TD.bFound = false;
-        nFound--;
-        continue;
-      }
-      TD.v2Found = Finder.GetSubPixPos();
-    }
-    else
-    {
-      TD.v2Found = Finder.GetCoarsePosAsVector();
-      TD.bDidSubPix = false;
-    }
-  }
-
-  return nFound;
-}
 
 // Find points in the image. Uses the PatchFiner struct stored in TrackerData
 int Tracker::SearchForPoints(vector<TrackerData*> &vTD, int nRange, int nSubPixIts)
@@ -1528,9 +1270,208 @@ Vector<6> Tracker::CalcPoseUpdate(vector<TrackerData*> vTD, double dOverrideSigm
   wls.compute();
   //Weiss{
   if (bMarkOutliers)  //only true for last iteration, see code above... (iter==9)
+  {
     mmCovariances=TooN::SVD<6>(wls.get_C_inv()).get_pinv();
+  }
+
   //}
   return wls.get_mu();
+}
+
+float Tracker::CalcPoseLocalizationQuality(vector<TrackerData> vTD, SE3<> pose, bool print)
+{
+  for(int i=0; i<NBINS_ROWS ;i++)
+    for(int j=0; j<NBINS_COLS;j++)
+    {  
+      s0[i][j] = 0;
+      s1[i/2][j/2] = 0;
+      s2[i/4][j/4] = 0;
+      s3[i/8][j/8] = 0;
+      qb_0[i][j] = 0;
+      qb_1[i/2][j/2] = 0;
+      qb_2[i/4][j/4] = 0;
+      qb_3[i/8][j/8] = 0;
+    }
+  float s0_max = s0[0][0], s1_max = s1[0][0], s2_max = s2[0][0], s3_max = s3[0][0];
+  for(unsigned int f=0; f<vTD.size(); f++)
+  {
+    TrackerData &TD = vTD[f];
+    if(!TD.bInImage)
+    {
+      if(print) cout<<"not found"<<endl;
+      continue;
+    }
+    else if(print)
+      cout<<"continuing"<<endl;
+
+    Vector<2, int> bin = makeVector(int(NBINS_ROWS*TD.v2Image[0]/TD.irImageSize[0]), int(NBINS_ROWS*TD.v2Image[1]/TD.irImageSize[1]));
+    float q_alpha, q_out, q_f, p_alpha, p_s, p_f;
+
+    Vector<3> v3Center_NC = unproject(mCamera.UnProject(TD.Point->irCenter)), v3Normal_NC = makeVector( 0,0,1);
+    normalize(v3Center_NC);
+    p_alpha = v3Center_NC * v3Normal_NC;
+
+    //Vector<3> curr_translation = ;
+    //Vector<3> original_translation = TD.Point->v3WorldPos - TD.Point->pPatchSourceKF->se3CfromW.get_translation();
+
+    float curr_dist = sqrt((TD.Point->v3WorldPos - pose.get_translation()) * (TD.Point->v3WorldPos - pose.get_translation()));
+    float original_dist = sqrt((TD.Point->v3WorldPos - TD.Point->pPatchSourceKF->se3CfromW.get_translation()) * (TD.Point->v3WorldPos - TD.Point->pPatchSourceKF->se3CfromW.get_translation()));
+
+    float s_ki = curr_dist / original_dist;
+    Vector<4> S = S_const * L[TD.Point->nSourceLevel];
+
+    if(S[0] <= s_ki and s_ki <=S[1])
+      p_s = (s_ki - S[0])/(S[1] - S[0]);
+    else if(S[1] <= s_ki and s_ki <=S[2])
+      p_s = 1;
+    else if(S[2] <= s_ki and s_ki <=S[3])
+      p_s = 1 - (s_ki - S[2])/(S[3] - S[2]);
+    else
+      p_s = 0;
+
+    p_f = p_s * p_alpha;
+
+
+    //set<KeyFrame::Ptr> measurementKFs = TD.Point->pMMData->sMeasurementKFs;
+    q_out = (TD.Point->pMMData->sMeasurementKFs.size()>=4)?1:TD.Point->pMMData->sMeasurementKFs.size()/4.0;
+    float alphamax = 0,alpha_curr;
+    //Vector<3> A, B, X = TD.Point->v3WorldPos;
+    for(set<KeyFrame::Ptr>::iterator it=TD.Point->pMMData->sMeasurementKFs.begin(); it!=TD.Point->pMMData->sMeasurementKFs.rbegin().base();++it)
+    {
+      //A = (*it)->se3CfromW.get_translation();
+      for(set<KeyFrame::Ptr>::iterator jt=std::next(it); jt!=TD.Point->pMMData->sMeasurementKFs.end();++jt)
+      {
+        //B = (*jt)->se3CfromW.get_translation();
+        alpha_curr = acos((TD.Point->v3WorldPos-(*it)->se3CfromW.get_translation())*(TD.Point->v3WorldPos-(*jt)->se3CfromW.get_translation())/(norm(TD.Point->v3WorldPos-(*it)->se3CfromW.get_translation())*norm(TD.Point->v3WorldPos-(*jt)->se3CfromW.get_translation())));
+      }
+      if(alphamax < alpha_curr)
+        alphamax = alpha_curr;
+    }
+
+    q_alpha = (alphamax<=alpha_cap)?alphamax/alpha_cap:1;
+
+    q_f = q_out * q_alpha;
+
+    if(print) 
+      cout<<"Values: "<<q_out<<" "<<q_alpha<<" "<<p_s<<" "<<p_alpha<<endl;
+    float value = q_f * p_f;
+    s0[bin[0]][bin[1]] += value;
+    if(s0[bin[0]][bin[1]] > s0_max)
+      s0_max = s0[bin[0]][bin[1]];
+
+    if(bin[0] == 0 or bin[0] == NBINS_ROWS-1 or bin[1] == 0 or bin[1] == NBINS_COLS-1)
+      continue;
+    s1[bin[0]/2][bin[1]/2] += value;
+    if(s1[bin[0]/2][bin[1]/2] > s1_max)
+      s1_max = s1[bin[0]/2][bin[1]/2];
+
+    s2[bin[0]/4][bin[1]/4] += value;
+    if(s2[bin[0]/4][bin[1]/4] > s2_max)
+      s2_max = s2[bin[0]/4][bin[1]/4];
+
+    if(bin[0] == 1 or bin[0] == NBINS_ROWS-2 or bin[1] == 1 or bin[1] == NBINS_COLS-2)
+      continue;
+
+    s3[bin[0]/8][bin[1]/8] += value;
+    if(s3[bin[0]/8][bin[1]/8] > s3_max)
+      s3_max = s3[bin[0]/8][bin[1]/8];    
+  }
+  if(print)
+  {
+    cout<<"s0: "<<s0<<endl<<endl;
+    cout<<s0_max<<endl;
+  }
+
+  qb_0 = s0/s0_max;
+  float max_y, val_y, q0 = 0, q1 = 0, q2 = 0, q3 = 0;
+  int nrows = NBINS_ROWS, ncols = NBINS_COLS;
+  for(int i=0; i<nrows;i++)
+    for(int j=0; j<ncols;j++)
+    {
+      max_y = 0;
+      for(int p=0; p<nrows;p++)
+        for(int q=0; q<ncols;q++)
+        {
+          if(p==i and q==j)
+            continue;
+          val_y = qb_0[p][q]*sqrt((p-i)*(p-i) + (q-j)*(q-j))/dmax_0[p][q];
+          if(val_y > max_y)
+            max_y = val_y;
+        }
+      sr_0[i][j] = qb_0[i][j] * max_y;
+      q0 += qb_0[i][j] * max_y;
+    }
+  q0 /= nrows*ncols;  
+
+  nrows /= 2;
+  ncols /= 2;
+  for(int i=0; i<nrows;i++)
+    for(int j=0; j<ncols;j++)
+    {
+      max_y = 0;
+      for(int p=0; p<nrows;p++)
+        for(int q=0; q<ncols;q++)
+        {
+          if(p==i and q==j)
+            continue;
+          val_y = qb_1[p][q]*sqrt((p-i)*(p-i) + (q-j)*(q-j))/dmax_1[p][q];
+          if(val_y > max_y)
+            max_y = val_y;
+        }
+      sr_1[i][j] = qb_1[i][j] * max_y;
+      q1 += qb_1[i][j] * max_y;
+    }
+  q1 /= nrows*ncols;  
+
+  nrows /= 2;
+  ncols /= 2;
+  for(int i=0; i<nrows;i++)
+    for(int j=0; j<ncols;j++)
+    {
+      max_y = 0;
+      for(int p=0; p<nrows;p++)
+        for(int q=0; q<ncols;q++)
+        {
+          if(p==i and q==j)
+            continue;
+          val_y = qb_2[p][q]*sqrt((p-i)*(p-i) + (q-j)*(q-j))/dmax_2[p][q];
+          if(val_y > max_y)
+            max_y = val_y;
+        }
+      sr_2[i][j] = qb_2[i][j] * max_y;
+      q2 += qb_2[i][j] * max_y;
+    }
+  q2 /= nrows*ncols;  
+
+  nrows /= 2;
+  ncols /= 2;
+  for(int i=0; i<nrows;i++)
+    for(int j=0; j<ncols;j++)
+    {
+      max_y = 0;
+      for(int p=0; p<nrows;p++)
+        for(int q=0; q<ncols;q++)
+        {
+          if(p==i and q==j)
+            continue;
+          val_y = qb_3[p][q]*sqrt((p-i)*(p-i) + (q-j)*(q-j))/dmax_3[p][q];
+          if(val_y > max_y)
+            max_y = val_y;
+        }
+      sr_3[i][j] = qb_3[i][j] * max_y;
+      q3 += qb_3[i][j] * max_y;
+    }
+  q3 /= nrows*ncols;  
+
+  if(print)
+  {
+    cout<<"Q: "<<q0<<" "<<q1<<" "<<q2<<" "<<q3<<endl;
+  }
+  
+  return 0.25*(q0+q1+q2+q3);
+
+ 
+  
 }
 
 
