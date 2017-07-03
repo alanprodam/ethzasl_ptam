@@ -683,7 +683,7 @@ bool System::posepointcloudservice(ptam_com::PosePointCloudRequest & req, ptam_c
 
   pair<pcl::PointCloud<pcl::PointXYZ>, float > result = getVisiblePointsFromPose(TooN::SE3<double>(R,-R.get_matrix()*T), false);
   pcl::toROSMsg(result.first, resp.pointCloud);
-  resp.quality = result.second;
+  //resp.quality = result.second;
   /*for (unsigned int i = 0; i < resp.covariance.size(); i++)
         resp.covariance[i] = sqrt(fabs(result.second[i % 6][i / 6]));*/
 
@@ -750,16 +750,16 @@ bool System::pointcloudservice(ptam_com::PointCloudRequest & req, ptam_com::Poin
       uint32_t lvl = p.nSourceLevel;
       uint32_t KF = p.pPatchSourceKF->ID;
 
-      /*pvec[0] = fvec[0];
-      pvec[1] = -fvec[2];
-      pvec[2] = -fvec[1];
-*/
+      // pvec[0] = fvec[0];
+      // pvec[1] = -fvec[2];
+      // pvec[2] = -fvec[1];
 
-/*      pvec[0] = -fvec[2];
+
+      pvec[0] = -fvec[2];
       pvec[1] = -fvec[0];
       pvec[2] = -fvec[1];
-*/
-      memcpy(dat, &(fvec),3*sizeof(float));
+
+      memcpy(dat, &(pvec),3*sizeof(float));
       memcpy(dat+3*sizeof(uint32_t),&colorlvl,sizeof(uint32_t));
       memcpy(dat+4*sizeof(uint32_t),&lvl,sizeof(uint32_t));
       memcpy(dat+5*sizeof(uint32_t),&KF,sizeof(uint32_t));
