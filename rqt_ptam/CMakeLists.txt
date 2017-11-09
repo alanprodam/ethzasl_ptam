@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 2.8.3)
 project(rqt_ptam)
 
 find_package(Qt4 COMPONENTS QtCore QtGui REQUIRED)
-find_package(catkin REQUIRED)
+find_package(catkin REQUIRED rqt_gui_cpp)
 
 
 catkin_package()

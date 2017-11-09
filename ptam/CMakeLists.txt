@@ -7,6 +7,8 @@ add_custom_target(
   COMMAND cd ${PROJECT_SOURCE_DIR}/thirdparty && make
 )
 
+add_definitions(-std=c++11) 
+
 find_package(catkin REQUIRED COMPONENTS
   roscpp
   dynamic_reconfigure
